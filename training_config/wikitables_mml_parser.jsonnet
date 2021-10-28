@@ -5,31 +5,31 @@
   "pytorch_seed": 953,
   "dataset_reader": {
     "type": "wikitables",
-    "tables_directory": "/wikitables_tagged",
-    "offline_logical_forms_directory": "/offline_search_output/",
+    "tables_directory": "./data/WikiTableQuestions/",
+    "offline_logical_forms_directory": "./tmp/offline_search_output/",
     "max_offline_logical_forms": 60,
-    "lazy": false
   },
   "validation_dataset_reader": {
     "type": "wikitables",
-    "tables_directory": "/wikitables_tagged",
+    "tables_directory": "./data/WikiTableQuestions/",
     "keep_if_no_logical_forms": true,
-    "lazy": false
   },
   "vocabulary": {
     "min_count": {"tokens": 3},
     "tokens_to_add": {"tokens": ["-1"]}
   },
-  "train_data_path": "/wikitables_raw_data/random-split-1-train.examples",
-  "validation_data_path": "/wikitables_raw_data/random-split-1-dev.examples",
+  "train_data_path": "./data/WikiTableQuestions/data/random-split-1-train.examples",
+  "validation_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
   "model": {
     "type": "wikitables_mml_parser",
     "question_embedder": {
-      "tokens": {
-        "type": "embedding",
-        "embedding_dim": 200,
-        "trainable": true
-      }
+      "token_embedders": {
+        "tokens": {
+          "type": "embedding",
+          "embedding_dim": 200,
+          "trainable": true
+        }
+      },
     },
     "action_embedding_dim": 100,
     "encoder": {
@@ -61,7 +61,7 @@
   "trainer": {
     "num_epochs": 100,
     "patience": 10,
-    "cuda_device": 0,
+    "cuda_device": -1,
     "grad_norm": 5.0,
     "validation_metric": "+denotation_acc",
     "optimizer": {

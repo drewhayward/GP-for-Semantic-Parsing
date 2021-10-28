@@ -6,6 +6,7 @@ import argparse
 import gzip
 import logging
 import math
+from typing import Dict, List
 from multiprocessing import Process
 
 sys.path.insert(
@@ -13,11 +14,35 @@ sys.path.insert(
 )
 
 from allennlp.common.util import JsonDict
-from allennlp.data.tokenizers import WordTokenizer
-from allennlp.data.dataset_readers.semantic_parsing.wikitables import util as wikitables_util
-from allennlp.semparse.contexts import TableQuestionContext
-from allennlp.semparse.domain_languages import WikiTablesLanguage
-from allennlp.semparse import ActionSpaceWalker
+from allennlp.data.tokenizers import SpacyTokenizer
+from allennlp_semparse.common.wikitables.table_question_context import TableQuestionContext
+from allennlp_semparse.domain_languages.wikitables_language import WikiTablesLanguage
+from allennlp_semparse.common.action_space_walker import ActionSpaceWalker
+
+
+def parse_example_line(lisp_string: str) -> Dict:
+    """
+    Training data in WikitableQuestions comes with examples in the form of lisp strings in the format:
+        (example (id <example-id>)
+                 (utterance <question>)
+                 (context (graph tables.TableKnowledgeGraph <table-filename>))
+                 (targetValue (list (description <answer1>) (description <answer2>) ...)))
+    We parse such strings and return the parsed information here.
+    """
+    id_piece, rest = lisp_string.split(') (utterance "')
+    example_id = id_piece.split('(id ')[1]
+    question, rest = rest.split('") (context (graph tables.TableKnowledgeGraph ')
+    table_filename, rest = rest.split(')) (targetValue (list')
+    target_value_strings = rest.strip().split("(description")
+    target_values = []
+    for string in target_value_strings:
+        string = string.replace(")", "").replace('"', '').strip()
+        if string != "":
+            target_values.append(string)
+    return {'id': example_id,
+            'question': question,
+            'table_filename': table_filename,
+            'target_values': target_values}
 
 
 def search(
@@ -33,7 +58,7 @@ def search(
     print(f"Starting search with {len(data)} instances", file=sys.stderr)
     language_logger = logging.getLogger("allennlp.semparse.domain_languages.wikitables_language")
     language_logger.setLevel(logging.ERROR)
-    tokenizer = WordTokenizer()
+    tokenizer = SpacyTokenizer()
     if output_separate_files and not os.path.exists(output_path):
         os.makedirs(output_path)
     if not output_separate_files:
@@ -136,7 +161,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     input_data = [
-        wikitables_util.parse_example_line(example_line) for example_line in open(args.data_file)
+        parse_example_line(example_line) for example_line in open(args.data_file)
     ]
     if args.num_splits == 0 or len(input_data) <= args.num_splits or not args.output_separate_files:
         search(
