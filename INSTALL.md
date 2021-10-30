@@ -32,10 +32,11 @@ and put the extracted folder in `./data`
 
 ### Preprocess
 ```
-PYTHONPATH=. python3 scripts/wikitables/search_for_logical_forms.py data/WikiTableQuestions \
+PYTHONPATH=. python scripts/wikitables/search_for_logical_forms.py data/WikiTableQuestions \
     ./data/WikiTableQuestions/data/random-split-1-train.examples \
     tmp/offline_search_output \
-    --output-separate-files
+    --output-separate-files \
+    --num-splits 5
 ```
 
 ## Entrypoint
