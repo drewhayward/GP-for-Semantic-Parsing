@@ -56,12 +56,12 @@
     "dropout": 0.5
   },
   "data_loader": {
-    "batch_size": 1,
+    "batch_size": 10,
   },
   "trainer": {
     "num_epochs": 100,
     "patience": 10,
-    "cuda_device": -1,
+    "cuda_device": 0,
     "grad_norm": 5.0,
     "validation_metric": "+denotation_acc",
     "optimizer": {
@@ -71,6 +71,10 @@
     "learning_rate_scheduler": {
       "type": "exponential",
       "gamma": 0.99
-    }
+    },
+    "tensorboard_writer": {
+      "summary_interval": 100,
+      "histogram_interval": 100
+    },
   }
 }

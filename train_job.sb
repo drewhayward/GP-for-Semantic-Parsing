@@ -1,0 +1,19 @@
+#!/bin/bash --login
+########## SBATCH Lines for Resource Request ##########
+ 
+#SBATCH --time=24:00:00             # limit of wall clock time - how long the job will run (same as -t)
+#SBATCH --nodes=1                 # number of different nodes - could be an exact number or a range of nodes (same as -N)
+#SBATCH --ntasks=1                  # number of tasks - how many tasks (nodes) that you require (same as -n)
+#SBATCH --cpus-per-task=1           # number of CPUs (or cores) per task (same as -c)
+#SBATCH --mem-per-cpu=12G            # memory required per allocated CPU (or core) - amount of memory (in bytes)
+#SBATCH --job-name semparse-train      # you can give your job a name for easier identification (same as -J)
+#SBATCH --gpus=k80:1
+ 
+########## Command Lines to Run ##########
+ml load GCC/8.3.0
+ml load CUDA/10.2.89
+cd /mnt/home/haywar40/GP-for-Semantic-Parsing
+conda activate GPSP
+srun allennlp train training_config/wikitables_mml_parser.jsonnet -s ./experiments/mml/$(date +"%_F-%N")
+
+scontrol show job $SLURM_JOB_ID
