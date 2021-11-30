@@ -18,7 +18,8 @@
     "min_count": {"tokens": 3},
     "tokens_to_add": {"tokens": ["-1"]}
   },
-  "train_data_path": "./data/WikiTableQuestions/data/random-split-1-train.examples",
+  // "train_data_path": "./data/WikiTableQuestions/data/random-split-1-train.examples",
+  "train_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
   "validation_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
   "model": {
     "type": "wikitables_mml_parser",
@@ -37,7 +38,7 @@
       "input_size": 400,
       "hidden_size": 100,
       "bidirectional": true,
-      "num_layers": 1
+      "num_layers": 1,
     },
     "entity_encoder": {
       "type": "boe",
@@ -45,7 +46,7 @@
       "averaged": true
     },
     "decoder_beam_search": {
-      "beam_size": 10
+      "type": "evolutionary-search",
     },
     "max_decoding_steps": 16,
     "attention": {
@@ -58,10 +59,13 @@
   "data_loader": {
     "batch_size": 10,
   },
+  "validation_data_loader": {
+    "batch_size": 10
+  },
   "trainer": {
     "num_epochs": 100,
     "patience": 10,
-    "cuda_device": 0,
+    "cuda_device": -1,
     "grad_norm": 5.0,
     "validation_metric": "+denotation_acc",
     "optimizer": {
@@ -72,9 +76,10 @@
       "type": "exponential",
       "gamma": 0.99
     },
-    "tensorboard_writer": {
-      "summary_interval": 100,
-      "histogram_interval": 100
-    },
+    "callbacks": [
+      {
+        "type": "tensorboard"
+      }
+    ]
   }
 }

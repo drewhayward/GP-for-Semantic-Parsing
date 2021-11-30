@@ -3,7 +3,7 @@ from typing import Dict, Generic, List, TypeVar, Tuple
 
 import torch
 
-from allennlp.common.registrable import FromParams
+from allennlp.common.registrable import Registrable
 
 from allennlp_semparse.state_machines import util
 from allennlp_semparse.state_machines.states import State
@@ -12,7 +12,7 @@ from allennlp_semparse.state_machines.transition_functions import TransitionFunc
 StateType = TypeVar("StateType", bound=State)
 
 
-class BeamSearch(FromParams, Generic[StateType]):
+class BeamSearch(Registrable, Generic[StateType]):
     """
     This class implements beam search over transition sequences given an initial ``State`` and a
     ``TransitionFunction``, returning the highest scoring final states found by the beam (the
