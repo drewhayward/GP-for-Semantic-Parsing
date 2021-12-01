@@ -89,6 +89,7 @@ class BeamSearch(Registrable, Generic[StateType]):
         initial_state: StateType,
         transition_function: TransitionFunction,
         keep_final_unfinished_states: bool = True,
+        **kwargs
     ) -> Dict[int, List[StateType]]:
         """
         Parameters

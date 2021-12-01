@@ -60,7 +60,7 @@
     "batch_size": 10,
   },
   "validation_data_loader": {
-    "batch_size": 10
+    "batch_size": 1
   },
   "trainer": {
     "num_epochs": 100,

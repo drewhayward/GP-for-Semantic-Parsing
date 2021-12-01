@@ -212,7 +212,7 @@ class WikiTablesMmlSemanticParser(WikiTablesSemanticParser):
             # our output dictionary.
             initial_state.debug_info = [[] for _ in range(batch_size)]
             best_final_states = self._beam_search.search(
-                num_steps, initial_state, self._decoder_step, keep_final_unfinished_states=False
+                num_steps, initial_state, self._decoder_step, keep_final_unfinished_states=False, world=world, actions=actions
             )
             for i in range(batch_size):
                 # Decoding may not have terminated with any completed logical forms, if `num_steps`
