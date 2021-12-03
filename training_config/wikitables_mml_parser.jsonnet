@@ -18,8 +18,8 @@
     "min_count": {"tokens": 3},
     "tokens_to_add": {"tokens": ["-1"]}
   },
-  // "train_data_path": "./data/WikiTableQuestions/data/random-split-1-train.examples",
-  "train_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
+  "train_data_path": "./data/WikiTableQuestions/data/random-split-1-train.examples",
+  // "train_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
   "validation_data_path": "./data/WikiTableQuestions/data/random-split-1-dev.examples",
   "model": {
     "type": "wikitables_mml_parser",
@@ -46,7 +46,7 @@
       "averaged": true
     },
     "decoder_beam_search": {
-      "type": "evolutionary-search",
+      "beam_size": 10
     },
     "max_decoding_steps": 16,
     "attention": {
@@ -59,9 +59,9 @@
   "data_loader": {
     "batch_size": 10,
   },
-  "validation_data_loader": {
-    "batch_size": 1
-  },
+  // "validation_data_loader": {
+  //   "batch_size": 1
+  // },
   "trainer": {
     "num_epochs": 100,
     "patience": 10,
