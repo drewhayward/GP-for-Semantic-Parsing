@@ -7,8 +7,9 @@ from allennlp.data.vocabulary import Vocabulary
 from nltk import Tree
 
 from allennlp_semparse.state_machines import util
+from allennlp_semparse.state_machines import transition_functions
 from allennlp_semparse.state_machines.states import State
-from allennlp_semparse.state_machines.beam_search import BeamSearch
+from allennlp_semparse.state_machines.beam_search import Search
 from allennlp_semparse.state_machines.transition_functions import TransitionFunction
 from allennlp_semparse.domain_languages.domain_language import nltk_tree_to_logical_form
 from random_queries import random_query
@@ -30,9 +31,15 @@ def get_children(action: str) -> List[str]:
 
     return args
 
+def action_seq_to_grammarstate(action_ids, init_state, trans_func):
+    state = init_state
+    for act_id in action_ids:
+        state = trans_func.take_step(state, allowed_actions=[{act_id}])[0]
+    return state
 
-@BeamSearch.register('evolutionary-search')
-class EvolutionarySearch(BeamSearch):
+
+@Search.register('evolutionary-search')
+class EvolutionarySearch(Search):
     def __init__(
         self,
         vocab: Vocabulary,
@@ -83,17 +90,15 @@ class EvolutionarySearch(BeamSearch):
 
         # Convert actions to ids
         # TODO: Why don't the last columns get in the vocab correctly?
-        action_ids = [self.vocab.get_token_index(act, namespace="rule_labels") for act in action_seq]
+        action_ids = [action_to_id[act] for act in action_seq]
 
-        state = init_state
-        for act_id in action_ids:
-            state = trans_func.take_step(state, allowed_actions=[{act_id}])[0]
+        state = action_seq_to_grammarstate(action_ids, init_state, trans_func)
 
-        return state.score.item()
+        return state.score[0].item(), state
 
 
 
-    def single_evo_search(self, world, init_state, trans_func):
+    def single_evo_search(self, world, init_state, trans_func, action_to_id):
         
         # Generate random population
         pop = [random_query(world, self.init_tree_depth) for _ in range(self.pop_size)]
@@ -105,7 +110,8 @@ class EvolutionarySearch(BeamSearch):
             # Evaluate using the fitness function 
             # Keep pop size programs
             pass
-        pass
+        
+        return [self.eval_program(ind, world, trans_func, init_state, action_to_id)[1] for ind in pop[:5]]
 
     def search(
         self,
@@ -138,15 +144,15 @@ class EvolutionarySearch(BeamSearch):
         best_states : ``Dict[int, List[StateType]]``
             This is a mapping from batch index to the top states for that instance.
         """
-        assert len(world) == 1, "Evo search"
-        action_to_id = {act.rule: i for i, act in actions[0]}
+        assert len(world) == 1, "Evo search must have a batch size of 1"
+        action_to_id = {act.rule: i for i, act in enumerate(actions[0])}
         world = world[0]
         
-
+        top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id)
         # valid actions stored in initial_state.grammar_state: List[GrammarState], 
         # for gs in that list the actions are in gs._valid_actions
 
         # self.vocab.get_token_from_index(39, namespace="rule_labels") -> 'List[Row] -> [<List[Row],ComparableColumn:List[Row]>, List[Row], ComparableColumn]'
         # transition_function.take_step(initial_state, allowed_actions=[{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}])
-        best_states: Dict[int, List[StateType]] = {}
+        best_states: Dict[int, List[StateType]] = {0: top_k}
         return best_states
