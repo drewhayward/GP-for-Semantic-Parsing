@@ -16,7 +16,7 @@ from allennlp.modules import (
 from allennlp_semparse.domain_languages import WikiTablesLanguage
 from allennlp_semparse.fields.production_rule_field import ProductionRuleArray
 from allennlp_semparse.models.wikitables.wikitables_semantic_parser import WikiTablesSemanticParser
-from allennlp_semparse.state_machines import BeamSearch
+from allennlp_semparse.state_machines.beam_search import Search
 from allennlp_semparse.state_machines.states import GrammarBasedState
 from allennlp_semparse.state_machines.trainers import MaximumMarginalLikelihood
 from allennlp_semparse.state_machines.transition_functions import LinkingTransitionFunction
@@ -92,7 +92,7 @@ class WikiTablesMmlSemanticParser(WikiTablesSemanticParser):
         action_embedding_dim: int,
         encoder: Seq2SeqEncoder,
         entity_encoder: Seq2VecEncoder,
-        decoder_beam_search: BeamSearch,
+        decoder_beam_search: Search,
         max_decoding_steps: int,
         attention: Attention,
         mixture_feedforward: FeedForward = None,

@@ -11,8 +11,11 @@ from allennlp_semparse.state_machines.transition_functions import TransitionFunc
 
 StateType = TypeVar("StateType", bound=State)
 
+class Search(Registrable, Generic[StateType]):
+    default_implementation = 'beam-search'
 
-class BeamSearch(Registrable, Generic[StateType]):
+@Search.register('beam-search')
+class BeamSearch(Search):
     """
     This class implements beam search over transition sequences given an initial ``State`` and a
     ``TransitionFunction``, returning the highest scoring final states found by the beam (the
