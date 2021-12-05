@@ -7,17 +7,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, os.par
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", level=logging.DEBUG
 )
-from allennlp.commands.train import datasets_from_params
+# from allennlp.commands.train import datasets_from_params
+from allennlp.training.util import data_loaders_from_params
 from allennlp.common import Params
 from allennlp.data import Instance
 
 
 def main(params: Params, outdir: str):
     os.makedirs(outdir, exist_ok=True)
-    params["dataset_reader"]["include_table_metadata"] = True
-    if "validation_dataset_reader" in params:
-        params["validation_dataset_reader"]["include_table_metadata"] = True
-    all_datasets = datasets_from_params(params)
+    # params["dataset_reader"]["include_table_metadata"] = True
+    # if "validation_dataset_reader" in params:
+    #     params["validation_dataset_reader"]["include_table_metadata"] = True
+    all_datasets = data_loaders_from_params(params)
     for name, dataset in all_datasets.items():
         with open(outdir + name + ".jsonl", "w") as outfile:
             for instance in iter(dataset):
