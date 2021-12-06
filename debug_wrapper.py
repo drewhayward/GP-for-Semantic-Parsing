@@ -17,15 +17,17 @@ serialization_dir = "./experiments/debugger_train"
 # Hence we wipe it out in advance.
 # BE VERY CAREFUL NOT TO DO THIS FOR ACTUAL TRAINING!
 
-shutil.rmtree(serialization_dir, ignore_errors=True)
+# shutil.rmtree(serialization_dir, ignore_errors=True)
 
 # Assemble the command into sys.argv
 sys.argv = [
     "allennlp",  # command name, not used by main
-    "train",
-    config_file,
-    "-s", serialization_dir,
-    "--include-package", "allennlp_semparse"
+    "evaluate",
+    "experiments/models/evosearch/",
+    "data/WikiTableQuestions/data/random-split-1-dev.examples"
+    # config_file,
+    # "-s", serialization_dir,
+    # "--include-package", "allennlp_semparse"
     # "-o", overrides,
 ]
 
