@@ -236,7 +236,8 @@ class EvolutionarySearch(Search):
         pop_lambda: int = 10,
         init_tree_depth: int = 5,
         mutation_ratio: int = 1,
-        tournament_k: int = 5
+        tournament_k: int = 5,
+        skip_failures: bool = True
     ) -> None:
         self.num_generations = num_generations
         self.pop_size = pop_size
@@ -244,6 +245,7 @@ class EvolutionarySearch(Search):
         self.mutation_ratio = mutation_ratio
         self.pop_lambda = pop_lambda
         self.tournament_k = tournament_k
+        self.skip_failures = skip_failures
 
         self.search_count = 0
 
@@ -380,14 +382,17 @@ class EvolutionarySearch(Search):
         action_to_id = {act.rule: i for i, act in enumerate(actions[0])}
         world = world[0]
         
-        # try:
-        # seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
-        top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, None)
+        try:
+            seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
+            top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, None)
 
-        # self.vocab.get_token_from_index(39, namespace="rule_labels") -> 'List[Row] -> [<List[Row],ComparableColumn:List[Row]>, List[Row], ComparableColumn]'
-        # transition_function.take_step(initial_state, allowed_actions=[{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}])
-        best_states: Dict[int, List[StateType]] = {0: top_k}
-        return best_states
-        # except:
-        #     print('Failed to search for the parse')
-        #     return {}
+            # self.vocab.get_token_from_index(39, namespace="rule_labels") -> 'List[Row] -> [<List[Row],ComparableColumn:List[Row]>, List[Row], ComparableColumn]'
+            # transition_function.take_step(initial_state, allowed_actions=[{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}])
+            best_states: Dict[int, List[StateType]] = {0: top_k}
+            return best_states
+        except Exception as e:
+            if not self.skip_failures:
+                raise e
+
+            print('Failed to search for the parse')
+            return {}

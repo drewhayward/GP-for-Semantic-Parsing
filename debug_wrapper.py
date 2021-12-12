@@ -7,6 +7,7 @@ from overrides.overrides import overrides
 overrides = json.dumps({
     'model.decoder_beam_search': {
         "type": 'evolutionary-search',
+        "skip_failures": False,
         "num_generations": 20,
         "pop_size": 100,
         "pop_lambda": 75,
