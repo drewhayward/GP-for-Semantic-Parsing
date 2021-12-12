@@ -245,6 +245,8 @@ class EvolutionarySearch(Search):
         self.pop_lambda = pop_lambda
         self.tournament_k = tournament_k
 
+        self.search_count = 0
+
         self.startup_search = BeamSearch(1)
 
     def eval_program(self, program_tree, world, trans_func, init_state, action_to_id):
@@ -259,7 +261,7 @@ class EvolutionarySearch(Search):
         return state.score[0].item(), state
 
     def single_evo_search(self, world, init_state, trans_func, action_to_id, seed_state = None):
-        
+        self.search_count += 1
         # Generate random population
         productions = world.get_nonterminal_productions()
         productions = {
@@ -352,7 +354,7 @@ class EvolutionarySearch(Search):
         plt.legend(ops)
 
 
-        plt.savefig(f'figs/{0}attrib.png')
+        plt.savefig(f'figs/{self.search_count}metrics.png')
         
         return [p.state for p in pop[-5:]]
 
