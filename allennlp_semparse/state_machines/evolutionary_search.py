@@ -37,10 +37,18 @@ class Tree(_Tree):
         return total
     
     def __eq__(self, other):
-        return nltk_tree_to_logical_form(self) == nltk_tree_to_logical_form(other)
+        return self.logical_form() == other.logical_form()
 
     def __hash__(self):
-        return hash(nltk_tree_to_logical_form(self))
+        return hash(self.logical_form())
+
+    def logical_form(self):
+        if len(self) == 0:
+            return self.label()
+        elif len(self) == 1:
+            return self[0].logical_form()
+        else:
+            return f'({" ".join(c.logical_form() for c in self)})'
 
 class Individual:
     tree: Tree
@@ -55,7 +63,7 @@ class Individual:
         if attribution is not None:
             self.gen_op = attribution
         else:
-            self.gen_op = 'init'
+            self.gen_op = 'ops/init'
     
     def __eq__(self, other) -> None:
         return other.tree == self.tree
@@ -99,10 +107,6 @@ def random_subtree(non_term, productions, max_depth, depth=0) -> Tree:
     else:
         action = random.choice(productions[non_term])
 
-
-    if len(action) == 1:
-        return random_subtree(action[0], productions, max_depth, depth + 1)
-    else:
         return Tree(
                 non_term,
                 [random_subtree(child, productions, max_depth, depth+1) for child in action],
@@ -135,7 +139,7 @@ def mutate_leaf(program_tree, productions, ratio=1):
 
     for node, parent, id, _ in flat_nodes:
         if len(node) == 0 and random.random() < (1 / num_leaves) * ratio: # it's a leaf
-            new_label = random.choice([p[0] for p in productions[parent.action[id]] if len(p) == 1])
+            new_label = random.choice([p[0] for p in productions[parent.label()] if len(p) == 1])
             parent[id] = Tree(new_label, [])
 
     return mutated_tree
@@ -149,7 +153,7 @@ def mutate_subtree(program_tree, productions, ratio=1, max_depth=5):
     num_nodes = len(flat_nodes)
 
     for node, parent, id, depth in flat_nodes:
-        if parent is not None and random.random() < (1 / num_nodes) * ratio: # it's a leaf
+        if parent is not None and random.random() < (1 / num_nodes) * ratio:
             parent[id] = random_subtree(node.label(), productions, max_depth - depth)
 
     return mutated_tree
@@ -197,9 +201,6 @@ def tournament_selection(pop, k):
 
     return max(tourney, key=lambda x: x.score)
 
-def tree_eq(t1, t2):
-    return nltk_tree_to_logical_form(t1) == nltk_tree_to_logical_form(t2)
-
 def action_seq_to_tree(action_sequence):
     curr_action, *remaining_actions = action_sequence
 
@@ -237,7 +238,8 @@ class EvolutionarySearch(Search):
         init_tree_depth: int = 5,
         mutation_ratio: int = 1,
         tournament_k: int = 5,
-        skip_failures: bool = True
+        skip_failures: bool = True,
+        seed_search: bool = False
     ) -> None:
         self.num_generations = num_generations
         self.pop_size = pop_size
@@ -246,13 +248,14 @@ class EvolutionarySearch(Search):
         self.pop_lambda = pop_lambda
         self.tournament_k = tournament_k
         self.skip_failures = skip_failures
+        self.seed_search = seed_search
 
         self.search_count = 0
 
         self.startup_search = BeamSearch(1)
 
     def eval_program(self, program_tree, world, trans_func, init_state, action_to_id):
-        program_string = nltk_tree_to_logical_form(program_tree)
+        program_string = program_tree.logical_form()
         action_seq = world.logical_form_to_action_sequence(program_string)
 
         # Convert actions to ids
@@ -293,19 +296,19 @@ class EvolutionarySearch(Search):
         for gen in trange(self.num_generations):
             pop = set(pop)
             while len(pop) < self.pop_size + self.pop_lambda:
-                if random.random() < 0.3: # crossover
+                if random.random() < 0.5: # crossover
                     ind1 = tournament_selection(pop, self.tournament_k)
                     ind2 = tournament_selection(pop, self.tournament_k)
 
                     cind1, cind2 = crossover_trees(ind1.tree, ind2.tree)
                     cind1 = mutate_leaf(cind1, productions, self.mutation_ratio)
-                    cind2 = mutate_leaf(cind1, productions, self.mutation_ratio)
-                    if not tree_eq(ind1.tree, cind1):
+                    cind2 = mutate_leaf(cind2, productions, self.mutation_ratio)
+                    if (ind1.tree != cind1) and (ind2.tree != cind1):
                         pop.update([fitness(cind1, 'ops/cross/mutate_leaf'), fitness(cind2, 'ops/cross/mutate_leaf')])
                 else: # mutation
                     ind = tournament_selection(pop, self.tournament_k)
-                    mutated = mutate_subtree(ind.tree, productions, ratio=2, max_depth=self.init_tree_depth)
-                    if not tree_eq(mutated, ind.tree): # enforce mutations because we are doing mu + lambda
+                    mutated = mutate_subtree(ind.tree, productions, ratio=self.mutation_ratio, max_depth=self.init_tree_depth)
+                    if (mutated != ind.tree): # enforce mutations because we are doing mu + lambda
                         pop.add(fitness(mutated, 'ops/mutate_subtree'))
 
             # To get a tree out of a state 's'
@@ -383,8 +386,11 @@ class EvolutionarySearch(Search):
         world = world[0]
         
         try:
+            if self.seed_search:
             seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
-            top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, None)
+            else:
+                seed_tree = None
+            top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, seed_tree)
 
             # self.vocab.get_token_from_index(39, namespace="rule_labels") -> 'List[Row] -> [<List[Row],ComparableColumn:List[Row]>, List[Row], ComparableColumn]'
             # transition_function.take_step(initial_state, allowed_actions=[{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}])
