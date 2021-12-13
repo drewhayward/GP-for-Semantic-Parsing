@@ -295,6 +295,7 @@ class EvolutionarySearch(Search):
         # for each generation
         for gen in trange(self.num_generations):
             pop = set(pop)
+            attempts = 0
             while len(pop) < self.pop_size + self.pop_lambda:
                 if random.random() < 0.5: # crossover
                     ind1 = tournament_selection(pop, self.tournament_k)
@@ -310,6 +311,13 @@ class EvolutionarySearch(Search):
                     mutated = mutate_subtree(ind.tree, productions, ratio=self.mutation_ratio, max_depth=self.init_tree_depth)
                     if (mutated != ind.tree): # enforce mutations because we are doing mu + lambda
                         pop.add(fitness(mutated, 'ops/mutate_subtree'))
+                
+                attempts += 1
+                if attempts > 1000:
+                    print('Population unable to mutate/crossover')
+                    for p in pop: # Print pop in logs to diagnose error
+                        print(p.tree.logical_form())
+                    raise Exception('Population stuck')
 
             # To get a tree out of a state 's'
             # id_to_action = {i: a for a, i in action_to_id.items()}
@@ -387,7 +395,7 @@ class EvolutionarySearch(Search):
         
         try:
             if self.seed_search:
-            seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
+                seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
             else:
                 seed_tree = None
             top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, seed_tree)
