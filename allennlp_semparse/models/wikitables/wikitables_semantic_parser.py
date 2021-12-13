@@ -100,6 +100,7 @@ class WikiTablesSemanticParser(Model):
         self._denotation_accuracy = Average()
         self._action_sequence_accuracy = Average()
         self._has_logical_form = Average()
+        self._log_prob_avg = Average()
 
         self._action_padding_index = -1  # the padding value used by IndexField
         num_actions = vocab.get_vocab_size(self._rule_namespace)
@@ -551,6 +552,7 @@ class WikiTablesSemanticParser(Model):
         """
         return {
             "lf_retrieval_acc": self._action_sequence_accuracy.get_metric(reset),
+            "log_prob": self._log_prob_avg.get_metric(reset),
             "denotation_acc": self._denotation_accuracy.get_metric(reset),
             "lf_percent": self._has_logical_form.get_metric(reset),
         }

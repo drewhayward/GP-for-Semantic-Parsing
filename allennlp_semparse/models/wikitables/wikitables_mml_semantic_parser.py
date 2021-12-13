@@ -220,6 +220,7 @@ class WikiTablesMmlSemanticParser(WikiTablesSemanticParser):
                 # infinite action loop).
                 if i in best_final_states:
                     best_action_indices = best_final_states[i][0].action_history[0]
+                    self._log_prob_avg(best_final_states[i][0].score[0].item())
                     if target_action_sequences is not None:
                         # Use a Tensor, not a Variable, to avoid a memory leak.
                         targets = target_action_sequences[i].data
