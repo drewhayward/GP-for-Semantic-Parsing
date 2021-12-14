@@ -369,7 +369,7 @@ class EvolutionarySearch(Search):
 
         plt.savefig(f'figs/{self.search_count}metrics.png')
         
-        return [p.state for p in pop[-5:]]
+        return [p.state for p in reversed(pop[-5:])]
 
     def get_seed_state(self, num_steps, initial_state, trans_func, action_to_id, world):
         id_to_action = {i: a for a, i in action_to_id.items()}
