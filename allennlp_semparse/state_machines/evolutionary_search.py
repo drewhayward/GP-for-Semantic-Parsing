@@ -396,20 +396,24 @@ class EvolutionarySearch(Search):
         action_to_id = {act.rule: i for i, act in enumerate(actions[0])}
         world = world[0]
         
-        try:
+        def _run():
             if self.seed_search:
                 seed_tree = self.get_seed_state(num_steps, initial_state, transition_function, action_to_id, world)
             else:
                 seed_tree = None
+            # pr = cProfile.Profile()
+            # pr.enable()
             top_k = self.single_evo_search(world, initial_state, transition_function, action_to_id, seed_tree)
-
-            # self.vocab.get_token_from_index(39, namespace="rule_labels") -> 'List[Row] -> [<List[Row],ComparableColumn:List[Row]>, List[Row], ComparableColumn]'
-            # transition_function.take_step(initial_state, allowed_actions=[{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}])
+            # pr.disable()
+            # pr.dump_stats('evo_search.prof')
             best_states: Dict[int, List[StateType]] = {0: top_k}
             return best_states
+        
+        if self.skip_failures:
+            try: 
+                return _run()
         except Exception as e:
-            if not self.skip_failures:
-                raise e
-
             print('Failed to search for the parse')
             return {}
+        else:
+            return _run()
