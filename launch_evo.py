@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('--init_tree_depth', type=int)
     parser.add_argument('--mutation_ratio', type=int)
     parser.add_argument('--tournament_k', type=int)
+    parser.add_argument('--seed_search', type=bool)
     
     args = parser.parse_args()
 
