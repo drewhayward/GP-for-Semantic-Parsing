@@ -1,19 +1,17 @@
+from pathlib import Path
 from copy import deepcopy
 from collections import defaultdict, Counter
 import random
+import string
 from typing import Dict, List, Tuple, TypeVar
 
 import torch
 import matplotlib.pyplot as plt
 from nltk import Tree as _Tree
-from torch._C import _get_tracing_state
 
-from allennlp_semparse.state_machines import util
-from allennlp_semparse.state_machines import transition_functions
 from allennlp_semparse.state_machines.states import State
 from allennlp_semparse.state_machines.beam_search import Search, BeamSearch
 from allennlp_semparse.state_machines.transition_functions import TransitionFunction
-from allennlp_semparse.domain_languages.domain_language import nltk_tree_to_logical_form
 from tqdm import trange
 
 StateType = TypeVar("StateType", bound=State)
@@ -250,6 +248,11 @@ class EvolutionarySearch(Search):
         self.skip_failures = skip_failures
         self.seed_search = seed_search
 
+        self.fig_folder = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        Path(f'./figs/{self.fig_folder}').mkdir(exist_ok=True)
+        print('Fig folder is ', self.fig_folder)
+        
+
         self.search_count = 0
 
         self.startup_search = BeamSearch(1)
@@ -367,7 +370,7 @@ class EvolutionarySearch(Search):
         plt.legend(ops)
 
 
-        plt.savefig(f'figs/{self.search_count}metrics.png')
+        plt.savefig(f'figs/{self.fig_folder}/{self.search_count}metrics.png')
         
         return [p.state for p in reversed(pop[-5:])]
 
