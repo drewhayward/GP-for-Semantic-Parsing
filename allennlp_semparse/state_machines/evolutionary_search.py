@@ -14,6 +14,8 @@ from allennlp_semparse.state_machines.beam_search import Search, BeamSearch
 from allennlp_semparse.state_machines.transition_functions import TransitionFunction
 from tqdm import trange
 
+import cProfile
+
 StateType = TypeVar("StateType", bound=State)
 
 class Tree(_Tree):
@@ -105,10 +107,11 @@ def random_subtree(non_term, productions, max_depth, depth=0) -> Tree:
     else:
         action = random.choice(productions[non_term])
 
-        return Tree(
-                non_term,
-                [random_subtree(child, productions, max_depth, depth+1) for child in action],
-                action=action)
+    # Test
+    return Tree(
+            non_term,
+            [random_subtree(child, productions, max_depth, depth+1) for child in action],
+            action=action)
 
 def random_query(productions, max_depth=5) -> Tree:
     return random_subtree('@start@', productions, max_depth)
@@ -293,6 +296,7 @@ class EvolutionarySearch(Search):
         pop_stats = defaultdict(list)
         pop_stats['ops/cross/mutate_leaf'] = []
         pop_stats['ops/mutate_subtree'] = []
+        pop_stats['ops/mutate_leaf']
         pop_stats['ops/init'] = []
 
         # for each generation
@@ -300,7 +304,7 @@ class EvolutionarySearch(Search):
             pop = set(pop)
             attempts = 0
             while len(pop) < self.pop_size + self.pop_lambda:
-                if random.random() < 0.5: # crossover
+                if random.random() < 0.333: # crossover
                     ind1 = tournament_selection(pop, self.tournament_k)
                     ind2 = tournament_selection(pop, self.tournament_k)
 
@@ -309,11 +313,16 @@ class EvolutionarySearch(Search):
                     cind2 = mutate_leaf(cind2, productions, self.mutation_ratio)
                     if (ind1.tree != cind1) and (ind2.tree != cind1):
                         pop.update([fitness(cind1, 'ops/cross/mutate_leaf'), fitness(cind2, 'ops/cross/mutate_leaf')])
-                else: # mutation
+                elif random.random() < 0.5: # mutation subtree
                     ind = tournament_selection(pop, self.tournament_k)
                     mutated = mutate_subtree(ind.tree, productions, ratio=self.mutation_ratio, max_depth=self.init_tree_depth)
                     if (mutated != ind.tree): # enforce mutations because we are doing mu + lambda
                         pop.add(fitness(mutated, 'ops/mutate_subtree'))
+                else: # mutate leaf
+                    ind = tournament_selection(pop, self.tournament_k)
+                    mutated = mutate_leaf(ind.tree, productions, ratio=self.mutation_ratio)
+                    if mutated != ind.tree:
+                        pop.add(fitness(mutated, 'ops/mutate_leaf'))
                 
                 attempts += 1
                 if attempts > 1000:
@@ -412,8 +421,8 @@ class EvolutionarySearch(Search):
         if self.skip_failures:
             try: 
                 return _run()
-        except Exception as e:
-            print('Failed to search for the parse')
-            return {}
+            except Exception as e:
+                print(f'Failed to search for the parse: {e}')
+                return {}
         else:
             return _run()
